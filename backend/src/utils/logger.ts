@@ -1,6 +1,4 @@
-import dotenv from "dotenv";
-
-dotenv.config();
+import { environment } from "../config/environment";
 
 type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 
@@ -12,7 +10,7 @@ const LOG_LEVEL_MAP: Record<LogLevel, number> = {
 };
 
 const MIN_LOG_LEVEL_NAME: LogLevel =
-  (process.env.LOG_LEVEL?.toUpperCase() as LogLevel) || "INFO";
+  (environment.logLevel?.toUpperCase() as LogLevel) || "INFO";
 const MIN_LOG_LEVEL_VALUE = LOG_LEVEL_MAP[MIN_LOG_LEVEL_NAME];
 
 const log = (level: LogLevel, message: string, ...args: any[]) => {

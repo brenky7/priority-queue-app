@@ -1,15 +1,10 @@
 import { ipKeyGenerator, rateLimit } from "express-rate-limit";
 import { warn as logWarn, debug as logDebug } from "../utils/logger";
+import { environment } from "../config/environment";
 
 // Načítanie konfiguračných premenných
-const windowMs = parseInt(
-  process.env.API_TASK_ADD_LIMIT_WINDOW_MS || "60000",
-  10
-);
-const maxRequests = parseInt(
-  process.env.API_TASK_ADD_LIMIT_MAX_REQUESTS || "10",
-  10
-);
+const windowMs = environment.apiTaskAddLimitWindowMs;
+const maxRequests = environment.apiTaskAddLimitMaxRequests;
 
 // Rate limiter pre pridávanie úloh
 export const addTaskRateLimiter = rateLimit({

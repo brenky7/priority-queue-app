@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod"; // Pre validáciu vstupov
 import * as taskService from "../services/taskService";
-import { Task } from "../models/task";
 
 // Schéma pre pridanie úlohy
 const addTaskSchema = z.object({
@@ -26,16 +25,6 @@ export const addTaskController = (
     const newTask = taskService.addTask(name, priority);
     res.status(201).json(newTask); // 201 Created
   } catch (error: unknown) {
-    // Zod ValidationError
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        message: "Chyba validácie vstupu.",
-        errors: error.issues.map((err) => ({
-          path: err.path.join("."),
-          message: err.message,
-        })),
-      });
-    }
     next(error);
   }
 };

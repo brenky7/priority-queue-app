@@ -1,22 +1,12 @@
 import { Task, CompletedTask } from "../models/task";
 import { v4 as uuidv4 } from "uuid";
-import dotenv from "dotenv";
+import { environment } from "../config/environment";
 import { debug, info, warn } from "../utils/logger";
 
-dotenv.config();
-const TASK_PROCESS_INTERVAL_MS = parseInt(
-  process.env.TASK_PROCESS_INTERVAL_MS || "10000",
-  10
-);
-const TASK_PROGRESS_INCREMENT_MIN = parseInt(
-  process.env.TASK_PROGRESS_INCREMENT_MIN || "10",
-  10
-);
-const TASK_PROGRESS_INCREMENT_MAX = parseInt(
-  process.env.TASK_PROGRESS_INCREMENT_MAX || "20",
-  10
-);
-const AGING_FACTOR = parseInt(process.env.AGING_FACTOR || "10000", 10);
+const TASK_PROCESS_INTERVAL_MS = environment.taskProcessIntervalMs;
+const TASK_PROGRESS_INCREMENT_MIN = environment.taskProgressIncrementMin;
+const TASK_PROGRESS_INCREMENT_MAX = environment.taskProgressIncrementMax;
+const AGING_FACTOR = environment.agingFactor;
 
 // In-memory úložisko pre úlohy
 export const tasks = new Map<string, Task>();

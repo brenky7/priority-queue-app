@@ -1,26 +1,21 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import cors from "cors";
 import taskRoutes from "./routes/taskRoutes";
-import dotenv from "dotenv";
+import { environment } from "./config/environment";
+import { globalErrorHandler } from "./middleware/errorHandler";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import {
-  error as logError,
-  info as logInfo,
-  debug as logDebug,
-} from "./utils/logger";
-import * as taskService from "./services/taskService"; // Import taskService
-
-dotenv.config();
+import { info as logInfo, debug as logDebug } from "./utils/logger";
+import * as taskService from "./services/taskService";
 
 const app = express();
-const PORT = process.env.PORT || 5050;
+const PORT = environment.port;
 app.set("trust proxy", true);
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: environment.frontendUrl,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   },
@@ -29,7 +24,7 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: environment.frontendUrl,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
@@ -37,14 +32,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api", taskRoutes);
-
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  logError(`Caught an error: ${err.message}`, err.stack);
-  res.status(err.statusCode || 500).json({
-    message: err.message || "Interná chyba servera.",
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
-  });
-});
+app.use(globalErrorHandler);
 
 // Socket.IO setup
 io.on("connection", (socket: Socket) => {
@@ -89,7 +77,6 @@ taskService.setTaskCompletedCallback((task) => {
 
 // Spustenie HTTP/Socket.IO servera
 httpServer.listen(PORT, () => {
-  // ZMENA: Namiesto app.listen používame httpServer.listen
   logInfo(`Server is running on http://localhost:${PORT}`);
   logInfo(`Socket.IO server is listening on ws://localhost:${PORT}`);
   logInfo("Pre ukončenie stlačte CTRL-C");
@@ -100,8 +87,8 @@ taskService.startProcessing();
 // Graceful shutdown
 const gracefulShutdown = () => {
   logInfo("Server je vypínaný...");
-  taskService.stopProcessing(); // Zastav spracovanie úloh
-  io.disconnectSockets(true); // Odpoj všetkých Socket.IO klientov
+  taskService.stopProcessing();
+  io.disconnectSockets(true);
   httpServer.close(() => {
     logInfo("HTTP server shut down.");
     process.exit(0);
