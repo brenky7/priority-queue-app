@@ -5,6 +5,7 @@ import {
   getCompletedTasksController,
   clearCompletedTasksController,
 } from "../controllers/taskController";
+import { addTaskRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ const router = Router();
 router.get("/tasks", getTasksController);
 
 // POST /api/tasks - Pridá novú úlohu
-router.post("/tasks", addTaskController);
+router.post("/tasks", addTaskRateLimiter, addTaskController);
 
 // GET /api/tasks/completed - Získa všetky dokončené úlohy
 router.get("/tasks/completed", getCompletedTasksController);

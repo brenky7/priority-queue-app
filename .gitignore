@@ -2,6 +2,7 @@
 *.code-workspace
 .DS_Store
 .env
+.env.local
 node_modules/
 dist/
 coverage/

@@ -1,4 +1,4 @@
-import { Task } from "../models/task";
+import { Task, CompletedTask } from "../models/task";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import { debug, info, warn } from "../utils/logger";
@@ -214,7 +214,12 @@ export const processTasks = (): void => {
   // Úloha bola dokončená
   if (task.progress === 100) {
     info(`Task ${task.id} (${task.name}) completed.`);
-    completedTasks.set(task.id, task);
+    const completedTask: CompletedTask = {
+      ...task,
+      completedAt: new Date(),
+    };
+
+    tasks.set(completedTask.id, completedTask);
     notifyTaskCompleted(task); // Oznámenie dokončenia
     updateQueueState();
     notifyClients();
