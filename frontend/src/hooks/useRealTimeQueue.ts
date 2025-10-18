@@ -5,7 +5,7 @@ import type {
   TaskProgressPayload,
   TaskCompletedPayload,
 } from "../types/socketTypes";
-import socket from "../services/socket";
+import { socketClient } from "../services/socket";
 
 // Návratový typ
 interface UseRealtimeQueueResult {
@@ -42,16 +42,16 @@ export function useRealtimeQueue(
 
   // Spracovanie socket udalostí
   useEffect(() => {
-    socket.connect();
-    console.log("useRealtimeQueue: Pokúšam sa pripojiť k serveru...");
+    socketClient.connect();
+    console.info("useRealtimeQueue: Pokúšam sa pripojiť k serveru...");
 
-    socket.on("connect", () => {
-      console.log("useRealtimeQueue: Úspešne pripojený k serveru!");
-      socket.emit("join_queue");
+    socketClient.onConnect(() => {
+      console.info("useRealtimeQueue: Úspešne pripojený k serveru!");
+      socketClient.joinQueue();
     });
 
-    socket.on("queue_update", (payload: QueueUpdatePayload) => {
-      console.log("useRealtimeQueue: Prijatá aktualizácia fronty:", payload);
+    socketClient.onQueueUpdate((payload: QueueUpdatePayload) => {
+      console.info("useRealtimeQueue: Prijatá aktualizácia fronty:", payload);
       setActiveTasks(
         payload.activeTasks.filter((task) => task.progress < 100) as Task[]
       );
@@ -65,8 +65,8 @@ export function useRealtimeQueue(
       setErrorMessage(null);
     });
 
-    socket.on("task_progress", (payload: TaskProgressPayload) => {
-      console.log("useRealtimeQueue: Prijatý progres úlohy:", payload);
+    socketClient.onTaskProgress((payload: TaskProgressPayload) => {
+      console.info("useRealtimeQueue: Prijatý progres úlohy:", payload);
       setActiveTasks((prevTasks) =>
         prevTasks.map((task) =>
           task.id === payload.taskId
@@ -81,19 +81,19 @@ export function useRealtimeQueue(
       );
     });
 
-    socket.on("task_completed", (payload: TaskCompletedPayload) => {
-      console.log("useRealtimeQueue: Úloha dokončená:", payload);
+    socketClient.onTaskCompleted((payload: TaskCompletedPayload) => {
+      console.info("useRealtimeQueue: Úloha dokončená:", payload);
     });
 
-    socket.on("disconnect", () => {
-      console.log("useRealtimeQueue: Odpojený od servera.");
+    socketClient.onDisconnect((reason) => {
+      console.info("useRealtimeQueue: Odpojený od servera. Dôvod:", reason);
       setLoading(true);
       displayTempError(
         "Odpojený od real-time servera. Pokúšam sa o opätovné pripojenie..."
       );
     });
 
-    socket.on("connect_error", (err) => {
+    socketClient.onConnectError((err) => {
       console.error("useRealtimeQueue: Chyba pripojenia:", err.message);
       displayTempError(`Chyba pripojenia k real-time serveru: ${err.message}`);
       setLoading(false);
@@ -101,9 +101,9 @@ export function useRealtimeQueue(
 
     // Odpojenie a čistenie
     return () => {
-      console.log("useRealtimeQueue: Odpojujem sa z komponentu.");
-      socket.offAny();
-      socket.disconnect();
+      console.info("useRealtimeQueue: Odpojujem sa z komponentu.");
+      socketClient.removeAllListeners();
+      socketClient.disconnect();
     };
   }, [displayTempError]);
 

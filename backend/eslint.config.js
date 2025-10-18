@@ -1,35 +1,31 @@
 import js from "@eslint/js";
 import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", "node_modules", ".eslintcache"]),
+  globalIgnores(["dist", "node_modules", "coverage", ".eslintcache"]),
 
   {
-    files: ["src/**/*.{ts,tsx}"],
-    extends: [
-      js.configs.recommended,
-      ...tseslint.configs.recommended,
-      reactHooks.configs["recommended-latest"],
-      reactRefresh.configs.vite,
-    ],
+    files: ["**/*.{ts}"],
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
+      ecmaVersion: 2021,
+      globals: {
+        ...globals.node,
+      },
       parser: tseslint.parser,
       parserOptions: {
-        project: "./tsconfig.app.json",
+        project: "./tsconfig.json",
         tsconfigRootDir: import.meta.dirname,
-        ecmaFeatures: {
-          jsx: true,
-        },
+        sourceType: "module",
       },
     },
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
     rules: {
-      "no-console": ["warn", { allow: ["warn", "error", "info"] }],
+      "no-console": ["warn", { allow: ["warn", "error", "info", "debug"] }],
       "prefer-const": "error",
       "no-var": "error",
       eqeqeq: ["error", "always"],

@@ -1,84 +1,83 @@
-import type { Task } from "../types/Task";
+// frontend/src/services/api.ts
+import type { Task, CompletedTask } from "../types/Task";
+interface ApiError {
+  message: string;
+  errors?: Array<{ path: string; message: string }>;
+}
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5050/api";
+class ApiClient {
+  private baseUrl: string;
 
-// Funkcia na spracovanie odpovede z API
-const handleResponse = async (response: Response) => {
-  // Úspešná odpoveď
-  if (response.ok) {
-    return response.json();
+  constructor() {
+    this.baseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:5050/api"; // <-- UPRAVENÉ NA SPRÁVNY PORT
   }
 
-  // Chybná odpoveď
-  let finalErrorMessage: string = `Chyba servera (status ${response.status}).`;
-  const contentType = response.headers.get("content-type");
-
-  // JSON odpoveď
-  if (contentType && contentType.includes("application/json")) {
-    try {
-      const jsonResponse: unknown = await response.json();
-      if (
-        typeof jsonResponse === "object" &&
-        jsonResponse !== null &&
-        "message" in jsonResponse &&
-        typeof (jsonResponse as { message: unknown }).message === "string"
-      ) {
-        finalErrorMessage = (jsonResponse as { message: string }).message;
-      } else {
-        finalErrorMessage = `Chyba servera (JSON odpoveď je neočakávaného formátu, status ${response.status}).`;
+  // Spracovanie odpovedí z API
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (response.ok) {
+      if (response.status === 204) {
+        return undefined as T;
       }
-    } catch (e) {
-      finalErrorMessage = `Chyba servera (JSON parse zlyhal, status ${response.status}), ${e}.`;
+      return response.json() as Promise<T>;
     }
-  } else {
-    // Textová odpoveď
-    try {
-      const text = await response.text();
-      finalErrorMessage = text || `Chyba servera (status ${response.status}).`;
-    } catch (e) {
-      finalErrorMessage = `Chyba servera (čítanie textu zlyhalo, status ${response.status}), ${e}.`;
+
+    const contentType = response.headers.get("content-type");
+    let errorMessage = `Server error (status ${response.status}).`; // Základná chybová správa
+
+    // Parsovanie odpovede
+    if (contentType?.includes("application/json")) {
+      try {
+        const errorData = (await response.json()) as ApiError;
+        errorMessage = errorData.message || errorMessage;
+      } catch (e: unknown) {
+        // Chyba pri parsovaní JSON
+        errorMessage = `Server error (JSON parsing failed, status ${response.status}).`;
+        console.error("JSON parsing error:", e);
+      }
+    } else {
+      // Odpoveď nie je JSON
+      try {
+        const text = await response.text();
+        errorMessage = text || errorMessage;
+      } catch (e: unknown) {
+        // Chyba pri čítaní textu
+        errorMessage = `Server error (text reading failed, status ${response.status}).`;
+        console.error("Text reading error:", e);
+      }
     }
+
+    throw new Error(errorMessage);
   }
 
-  // Finálna chyba
-  throw new Error(finalErrorMessage);
-};
-
-// Získa všetky aktívne úlohy
-export const getActiveTasks = async (): Promise<Task[]> => {
-  const response = await fetch(`${API_BASE_URL}/tasks`);
-  return handleResponse(response);
-};
-
-// Získa všetky dokončené úlohy
-export const getCompletedTasks = async (): Promise<Task[]> => {
-  const response = await fetch(`${API_BASE_URL}/tasks/completed`);
-  return handleResponse(response);
-};
-
-// Pridá novú úlohu
-export const addTask = async (
-  name: string,
-  priority: number
-): Promise<Task> => {
-  const response = await fetch(`${API_BASE_URL}/tasks`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, priority }),
-  });
-  return handleResponse(response);
-};
-
-// Vymaže dokončené úlohy
-export const clearCompletedTasks = async (): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/tasks/completed`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Chyba servera.");
+  async getActiveTasks(): Promise<Task[]> {
+    const response = await fetch(`${this.baseUrl}/tasks`);
+    return this.handleResponse<Task[]>(response);
   }
-};
+
+  async getCompletedTasks(): Promise<CompletedTask[]> {
+    const response = await fetch(`${this.baseUrl}/tasks/completed`);
+    return this.handleResponse<CompletedTask[]>(response);
+  }
+
+  async addTask(name: string, priority: number): Promise<Task> {
+    const response = await fetch(`${this.baseUrl}/tasks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, priority }),
+    });
+    return this.handleResponse<Task>(response);
+  }
+
+  async clearCompletedTasks(): Promise<void> {
+    const response = await await fetch(`${this.baseUrl}/tasks/completed`, {
+      method: "DELETE",
+    });
+
+    return this.handleResponse<void>(response);
+  }
+}
+
+export const apiClient = new ApiClient();

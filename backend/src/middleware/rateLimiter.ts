@@ -17,7 +17,7 @@ export const addTaskRateLimiter = rateLimit({
   legacyHeaders: false,
 
   // Handler na prekročenie limitu
-  handler: (req, res, next, options) => {
+  handler: (req, res, _next, options) => {
     logWarn(
       `Rate limit prekročený pre IP: ${req.ip} na ${req.originalUrl}. Limit: ${
         options.limit

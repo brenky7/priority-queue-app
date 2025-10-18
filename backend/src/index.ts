@@ -3,6 +3,12 @@ import cors from "cors";
 import taskRoutes from "./routes/taskRoutes";
 import { environment } from "./config/environment";
 import { globalErrorHandler } from "./middleware/errorHandler";
+import { taskEvents, TaskEvents } from "./events/taskEventEmitter";
+import type {
+  QueueUpdatePayload,
+  TaskProgressPayload,
+  TaskCompletedPayload,
+} from "./models/taskEventTypes";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { info as logInfo, debug as logDebug } from "./utils/logger";
@@ -41,11 +47,11 @@ io.on("connection", (socket: Socket) => {
   // Event: client -> server 'join_queue'
   socket.on("join_queue", () => {
     logDebug(`Client ${socket.id} joined queue monitoring.`);
-    socket.emit("queue_update", {
+    socket.emit(TaskEvents.QUEUE_UPDATE, {
       activeTasks: taskService.getTasks(),
       completedTasks: taskService.getCompletedTasks(),
       currentlyProcessingTask: taskService.getCurrentlyProcessingTask(),
-    });
+    } as QueueUpdatePayload);
   });
 
   socket.on("disconnect", () => {
@@ -54,25 +60,21 @@ io.on("connection", (socket: Socket) => {
 });
 
 // Task update notifications
-taskService.setQueueUpdateCallback(
-  (activeTasks, completedTasks, currentlyProcessingTask) => {
-    io.emit("queue_update", {
-      activeTasks,
-      completedTasks,
-      currentlyProcessingTask,
-    });
-    logDebug("Socket.IO: Emitting queue_update event.");
-  }
-);
-
-taskService.setTaskProgressCallback((taskId, progress) => {
-  io.emit("task_progress", { taskId, progress });
-  logDebug(`Socket.IO: Emitting task_progress for ${taskId} (${progress}%).`);
+taskEvents.onQueueUpdate((payload: QueueUpdatePayload) => {
+  io.emit(TaskEvents.QUEUE_UPDATE, payload);
+  logDebug("Socket.IO: Emitting queue_update event from taskEvents.");
 });
 
-taskService.setTaskCompletedCallback((task) => {
-  io.emit("task_completed", { task });
-  logDebug(`Socket.IO: Emitting task_completed for ${task.id}.`);
+taskEvents.onTaskProgress((payload: TaskProgressPayload) => {
+  io.emit(TaskEvents.TASK_PROGRESS, payload);
+  logDebug(
+    `Socket.IO: Emitting task_progress for ${payload.taskId} (${payload.progress}%).`
+  );
+});
+
+taskEvents.onTaskCompleted((payload: TaskCompletedPayload) => {
+  io.emit(TaskEvents.TASK_COMPLETED, payload);
+  logDebug(`Socket.IO: Emitting task_completed for ${payload.task.id}.`);
 });
 
 // Spustenie HTTP/Socket.IO servera

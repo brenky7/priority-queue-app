@@ -1,11 +1,11 @@
-import { Request, Response, NextFunction } from "express";
+import { Response } from "express";
 import { error as logError } from "../utils/logger";
 import { environment } from "../config/environment";
 import { ZodError } from "zod";
 
 // Trieda pre chyby aplikácie
 export class AppError extends Error {
-  constructor(public message: string, public statusCode = 500) {
+  constructor(public override message: string, public statusCode = 500) {
     super(message);
     this.name = this.constructor.name;
     Error.captureStackTrace(this, this.constructor);
@@ -25,12 +25,7 @@ export const formatZodError = (err: ZodError) => {
 };
 
 // Globálny error handler middleware
-export const globalErrorHandler = (
-  err: unknown,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const globalErrorHandler = (err: unknown, res: Response) => {
   let errorResponse = {
     message: "Internal server error",
     statusCode: 500,

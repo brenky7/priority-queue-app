@@ -1,11 +1,7 @@
-// src/App.tsx
-import { useState } from "react";
-import {
-  addTask as addApiTask,
-  clearCompletedTasks as clearApiCompletedTasks,
-} from "./services/api";
+import { apiClient } from "./services/api";
 import "./App.css";
 import { useRealtimeQueue } from "./hooks/useRealTimeQueue";
+import { TaskForm } from "./components/taskForm";
 
 function App() {
   // Hook pre správu fronty
@@ -18,40 +14,11 @@ function App() {
     displayTempError,
   } = useRealtimeQueue();
 
-  // Stavy pre novú úlohu
-  const [newTaskName, setNewTaskName] = useState<string>("");
-  const [newTaskPriority, setNewTaskPriority] = useState<number>(1);
-
-  // Handler pre pridanie novej úlohy
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newTaskName.trim()) {
-      displayTempError("Názov úlohy nemôže byť prázdny.");
-      return;
-    }
-
-    try {
-      const addedTask = await addApiTask(newTaskName, newTaskPriority);
-      console.log("Úloha pridaná cez REST:", addedTask);
-      setNewTaskName("");
-      setNewTaskPriority(1);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        displayTempError(err.message || "Nepodarilo sa pridať úlohu.");
-        console.error("Chyba pri pridávaní úlohy:", err.message);
-      } else {
-        displayTempError("Nepodarilo sa pridať úlohu (neznáma chyba).");
-        console.error("Neznáma chyba pri pridávaní úlohy:", err);
-      }
-    }
-  };
-
   // Handler pre vymazanie dokončených úloh
   const handleClearCompletedTasks = async () => {
     try {
-      await clearApiCompletedTasks();
-      console.log("Dokončené úlohy vymazané cez REST.");
+      await apiClient.clearCompletedTasks();
+      console.info("Dokončené úlohy vymazané cez REST.");
     } catch (err: unknown) {
       if (err instanceof Error) {
         displayTempError(
@@ -71,32 +38,11 @@ function App() {
   return (
     <div className="task-queue-monitor">
       <h1>Task Queue Monitor</h1>
-
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       {loading && <p>Pripájam sa a načítavam úlohy...</p>}
-
-      <div className="add-task-section">
-        <h2>Pridať novú úlohu:</h2>
-        <form onSubmit={handleAddTask}>
-          <input
-            type="text"
-            placeholder="Názov úlohy"
-            value={newTaskName}
-            onChange={(e) => setNewTaskName(e.target.value)}
-            required
-          />
-          <input
-            type="number"
-            placeholder="Priorita"
-            value={newTaskPriority}
-            onChange={(e) => setNewTaskPriority(parseInt(e.target.value, 10))}
-            min="0"
-            required
-          />
-          <button type="submit">Pridať úlohu</button>
-        </form>
-      </div>
-
+      {/* ZMENA TU: Používame nový TaskForm komponent */}
+      <TaskForm onError={displayTempError} />{" "}
+      {/* Odovzdávame onError callback */}
       <div className="queue-sections">
         <div className="active-tasks-section">
           <h2>Aktívne úlohy (podľa priority):</h2>
@@ -142,10 +88,7 @@ function App() {
               <p>ID: {task.id}</p>
               <p>Priorita: {task.priority}</p>
               <p>Progres: {task.progress}%</p>
-              <p>
-                Dokončené: {new Date(task.completedAt!).toLocaleString()}
-              </p>{" "}
-              {}
+              <p>Dokončené: {new Date(task.completedAt!).toLocaleString()}</p>
             </div>
           ))}
         </div>

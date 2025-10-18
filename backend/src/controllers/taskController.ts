@@ -31,7 +31,7 @@ export const addTaskController = (
 
 // Handler pre GET /api/tasks
 export const getTasksController = (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -45,7 +45,7 @@ export const getTasksController = (
 
 // Handler pre GET /api/tasks/completed
 export const getCompletedTasksController = (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -59,7 +59,7 @@ export const getCompletedTasksController = (
 
 // Handler pre DELETE /api/tasks/completed
 export const clearCompletedTasksController = (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ) => {
