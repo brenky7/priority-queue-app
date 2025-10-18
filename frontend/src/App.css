@@ -83,6 +83,7 @@ h2 {
   border-radius: 6px;
   background-color: #fdfdfd;
   transition: box-shadow 0.2s;
+  position: relative;
 }
 
 .task-item:hover {
@@ -141,4 +142,51 @@ h2 {
 .completed-tasks-section button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+.task-item.status-processing {
+  border: 2px solid #3498db;
+  background-color: #eaf6fd;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+  animation: pulse 1.5s infinite alternate;
+}
+
+.task-item.status-waiting {
+  border: 2px solid #f1c40f;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(216, 212, 3, 0.2);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: white;
+  margin-left: 5px;
+}
+
+.status-waiting {
+  background-color: #f1c40f; /* Žltá */
+}
+
+.status-processing {
+  background-color: #3498db; /* Modrá */
+}
+
+.status-completed {
+  background-color: #28a745; /* Zelená */
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+  }
+  to {
+    transform: scale(1.01);
+    box-shadow: 0 6px 16px rgba(52, 152, 219, 0.3);
+  }
 }

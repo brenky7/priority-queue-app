@@ -2,16 +2,18 @@ import { apiClient } from "./services/api";
 import "./App.css";
 import { useRealtimeQueue } from "./hooks/useRealTimeQueue";
 import { TaskForm } from "./components/taskForm";
+import { TaskStatus } from "./types/Task";
 
+// Hlavná aplikácia
 function App() {
-  // Hook pre správu fronty
   const {
     activeTasks,
     completedTasks,
-    currentlyProcessingTask,
     loading,
     errorMessage,
     displayTempError,
+    isConnected,
+    reconnectAttempt,
   } = useRealtimeQueue();
 
   // Handler pre vymazanie dokončených úloh
@@ -38,11 +40,17 @@ function App() {
   return (
     <div className="task-queue-monitor">
       <h1>Task Queue Monitor</h1>
+      <div
+        className={`connection-status ${
+          isConnected ? "connected" : "disconnected"
+        }`}
+      >
+        Status pripojenia:{" "}
+        {isConnected ? "Pripojené" : `Odpojené (pokus ${reconnectAttempt})`}
+      </div>
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       {loading && <p>Pripájam sa a načítavam úlohy...</p>}
-      {/* ZMENA TU: Používame nový TaskForm komponent */}
-      <TaskForm onError={displayTempError} />{" "}
-      {/* Odovzdávame onError callback */}
+      <TaskForm onError={displayTempError} /> {}
       <div className="queue-sections">
         <div className="active-tasks-section">
           <h2>Aktívne úlohy (podľa priority):</h2>
@@ -52,14 +60,23 @@ function App() {
           {activeTasks.map((task) => (
             <div
               key={task.id}
-              className={`task-item ${
-                currentlyProcessingTask?.id === task.id ? "processing" : ""
-              }`}
+              className={`task-item ${`status-${task.status.toLowerCase()} ${
+                task.status === TaskStatus.PROCESSING ? "processing" : ""
+              }`}`}
             >
               <h3>{task.name}</h3>
               <p>ID: {task.id}</p>
               <p>Priorita: {task.priority}</p>
+              <p>Efektívna priorita: {task.effectivePriority.toFixed(2)}</p>
               <p>Progres: {task.progress}%</p>
+              <p>
+                Status:{" "}
+                <span
+                  className={`status-badge status-${task.status.toLowerCase()}`}
+                >
+                  {task.status}
+                </span>
+              </p>
               <p>Vytvorené: {new Date(task.createdAt).toLocaleString()}</p>
               <div className="progress-bar-container">
                 <div
@@ -83,11 +100,23 @@ function App() {
             <p>Žiadne dokončené úlohy.</p>
           )}
           {completedTasks.map((task) => (
-            <div key={task.id} className="task-item completed">
+            <div
+              key={task.id}
+              className={`task-item completed status-${task.status.toLowerCase()}`}
+            >
               <h3>{task.name}</h3>
               <p>ID: {task.id}</p>
               <p>Priorita: {task.priority}</p>
+              <p>Efektívna priorita: {task.effectivePriority.toFixed(2)}</p>
               <p>Progres: {task.progress}%</p>
+              <p>
+                Status:{" "}
+                <span
+                  className={`status-badge status-${task.status.toLowerCase()}`}
+                >
+                  {task.status}
+                </span>
+              </p>
               <p>Dokončené: {new Date(task.completedAt!).toLocaleString()}</p>
             </div>
           ))}

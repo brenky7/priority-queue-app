@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod"; // Pre validáciu vstupov
-import * as taskService from "../services/taskService";
+import { taskService } from "../services/taskService";
+import { successResponse } from "../models/apiResponse";
 
 // Schéma pre pridanie úlohy
 const addTaskSchema = z.object({
@@ -18,12 +19,11 @@ export const addTaskController = (
   next: NextFunction
 ) => {
   try {
-    // Validácia vstupu
     const validatedData = addTaskSchema.parse(req.body);
     const { name, priority } = validatedData;
 
     const newTask = taskService.addTask(name, priority);
-    res.status(201).json(newTask); // 201 Created
+    res.status(201).json(successResponse(newTask, "Úloha úspešne pridaná."));
   } catch (error: unknown) {
     next(error);
   }
@@ -37,7 +37,7 @@ export const getTasksController = (
 ) => {
   try {
     const tasks = taskService.getTasks();
-    res.status(200).json(tasks);
+    res.status(200).json(successResponse(tasks));
   } catch (error) {
     next(error);
   }
@@ -51,7 +51,7 @@ export const getCompletedTasksController = (
 ) => {
   try {
     const completedTasks = taskService.getCompletedTasks();
-    res.status(200).json(completedTasks);
+    res.status(200).json(successResponse(completedTasks));
   } catch (error) {
     next(error);
   }
@@ -65,7 +65,9 @@ export const clearCompletedTasksController = (
 ) => {
   try {
     taskService.clearCompletedTasks();
-    res.status(204).send(); // 204 No Content
+    res
+      .status(200)
+      .json(successResponse(null, "Dokončené úlohy úspešne vymazané."));
   } catch (error) {
     next(error);
   }

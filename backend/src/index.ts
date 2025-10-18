@@ -12,7 +12,7 @@ import type {
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { info as logInfo, debug as logDebug } from "./utils/logger";
-import * as taskService from "./services/taskService";
+import { taskService } from "./services/taskService";
 
 const app = express();
 const PORT = environment.port;
@@ -83,8 +83,6 @@ httpServer.listen(PORT, () => {
   logInfo(`Socket.IO server is listening on ws://localhost:${PORT}`);
   logInfo("Pre ukončenie stlačte CTRL-C");
 });
-
-taskService.startProcessing();
 
 // Graceful shutdown
 const gracefulShutdown = () => {

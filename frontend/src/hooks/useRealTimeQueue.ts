@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Task, CompletedTask } from "../types/Task";
 import type {
   QueueUpdatePayload,
@@ -6,6 +6,7 @@ import type {
   TaskCompletedPayload,
 } from "../types/socketTypes";
 import { socketClient } from "../services/socket";
+import type { Socket } from "socket.io-client";
 
 // Návratový typ
 interface UseRealtimeQueueResult {
@@ -15,6 +16,8 @@ interface UseRealtimeQueueResult {
   loading: boolean;
   errorMessage: string | null;
   displayTempError: (message: string, duration?: number) => void;
+  isConnected: boolean;
+  reconnectAttempt: number;
 }
 
 // Správa fronty taskov
@@ -27,30 +30,52 @@ export function useRealtimeQueue(
     useState<Task | null>(null);
   const [loading, setLoading] = useState<boolean>(initialLoadingState);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [reconnectAttempt, setReconnectAttempt] = useState<number>(0);
 
   // Zobrazenie chyby
   const displayTempError = useCallback(
-    (message: string, duration: number = 5000) => {
+    (message: string, duration: number | null = 5000) => {
       setErrorMessage(message);
-      const timer = setTimeout(() => {
-        setErrorMessage(null);
-      }, duration);
-      return () => clearTimeout(timer); // Clean-up časovača
+      if (duration !== null && duration > 0) {
+        const timer = setTimeout(() => {
+          setErrorMessage(null);
+        }, duration);
+        return () => clearTimeout(timer);
+      }
+      return () => {};
     },
     []
   );
+
+  // Referencia na listenerov
+  const listenersRef = useRef<{
+    onConnect?: () => void;
+    onQueueUpdate?: (payload: QueueUpdatePayload) => void;
+    onTaskProgress?: (payload: TaskProgressPayload) => void;
+    onTaskCompleted?: (payload: TaskCompletedPayload) => void;
+    onDisconnect?: (reason: Socket.DisconnectReason) => void;
+    onConnectError?: (error: Error) => void;
+    onReconnecting?: (attempt: number) => void;
+    onReconnect?: (attempt: number) => void;
+  }>({});
 
   // Spracovanie socket udalostí
   useEffect(() => {
     socketClient.connect();
     console.info("useRealtimeQueue: Pokúšam sa pripojiť k serveru...");
 
-    socketClient.onConnect(() => {
+    listenersRef.current.onConnect = () => {
       console.info("useRealtimeQueue: Úspešne pripojený k serveru!");
+      setIsConnected(true);
+      setReconnectAttempt(0);
+      setLoading(false);
+      setErrorMessage(null);
       socketClient.joinQueue();
-    });
+    };
+    socketClient.onConnect(listenersRef.current.onConnect);
 
-    socketClient.onQueueUpdate((payload: QueueUpdatePayload) => {
+    listenersRef.current.onQueueUpdate = (payload: QueueUpdatePayload) => {
       console.info("useRealtimeQueue: Prijatá aktualizácia fronty:", payload);
       setActiveTasks(
         payload.activeTasks.filter((task) => task.progress < 100) as Task[]
@@ -63,9 +88,10 @@ export function useRealtimeQueue(
       setCurrentlyProcessingTask(payload.currentlyProcessingTask);
       setLoading(false);
       setErrorMessage(null);
-    });
+    };
+    socketClient.onQueueUpdate(listenersRef.current.onQueueUpdate);
 
-    socketClient.onTaskProgress((payload: TaskProgressPayload) => {
+    listenersRef.current.onTaskProgress = (payload: TaskProgressPayload) => {
       console.info("useRealtimeQueue: Prijatý progres úlohy:", payload);
       setActiveTasks((prevTasks) =>
         prevTasks.map((task) =>
@@ -79,31 +105,65 @@ export function useRealtimeQueue(
           ? { ...prevTask, progress: payload.progress }
           : prevTask
       );
-    });
+    };
+    socketClient.onTaskProgress(listenersRef.current.onTaskProgress);
 
-    socketClient.onTaskCompleted((payload: TaskCompletedPayload) => {
+    listenersRef.current.onTaskCompleted = (payload: TaskCompletedPayload) => {
       console.info("useRealtimeQueue: Úloha dokončená:", payload);
-    });
+    };
+    socketClient.onTaskCompleted(listenersRef.current.onTaskCompleted);
 
-    socketClient.onDisconnect((reason) => {
+    listenersRef.current.onDisconnect = (reason: Socket.DisconnectReason) => {
       console.info("useRealtimeQueue: Odpojený od servera. Dôvod:", reason);
       setLoading(true);
+      setIsConnected(false);
       displayTempError(
-        "Odpojený od real-time servera. Pokúšam sa o opätovné pripojenie..."
+        "Odpojený od real-time servera. Pokúšam sa o opätovné pripojenie...",
+        0
       );
-    });
+    };
+    socketClient.onDisconnect(listenersRef.current.onDisconnect);
 
-    socketClient.onConnectError((err) => {
+    listenersRef.current.onConnectError = (err: Error) => {
       console.error("useRealtimeQueue: Chyba pripojenia:", err.message);
-      displayTempError(`Chyba pripojenia k real-time serveru: ${err.message}`);
+      displayTempError(
+        `Chyba pripojenia k real-time serveru: ${err.message}`,
+        0
+      );
       setLoading(false);
-    });
+      setIsConnected(false);
+    };
+    socketClient.onConnectError(listenersRef.current.onConnectError);
+
+    listenersRef.current.onReconnecting = (attempt: number) => {
+      console.info(
+        `useRealtimeQueue: Pokus o opätovné pripojenie... (${attempt})`
+      );
+      setReconnectAttempt(attempt);
+      setLoading(true);
+      displayTempError(`Pokus o opätovné pripojenie (${attempt})...`, 0);
+    };
+    socketClient.onReconnecting(listenersRef.current.onReconnecting);
+
+    listenersRef.current.onReconnect = (attempt: number) => {
+      console.info(
+        `useRealtimeQueue: Úspešné opätovné pripojenie! Po pokusoch: ${attempt}`
+      );
+      window.location.reload();
+    };
+    socketClient.onReconnect(listenersRef.current.onReconnect);
 
     // Odpojenie a čistenie
     return () => {
       console.info("useRealtimeQueue: Odpojujem sa z komponentu.");
-      socketClient.removeAllListeners();
-      socketClient.disconnect();
+      socketClient.offConnect(listenersRef.current.onConnect!);
+      socketClient.offQueueUpdate(listenersRef.current.onQueueUpdate!);
+      socketClient.offTaskProgress(listenersRef.current.onTaskProgress!);
+      socketClient.offTaskCompleted(listenersRef.current.onTaskCompleted!);
+      socketClient.offDisconnect(listenersRef.current.onDisconnect!);
+      socketClient.offConnectError(listenersRef.current.onConnectError!);
+      socketClient.offReconnecting(listenersRef.current.onReconnecting!);
+      socketClient.offReconnect(listenersRef.current.onReconnect!);
     };
   }, [displayTempError]);
 
@@ -114,5 +174,7 @@ export function useRealtimeQueue(
     loading,
     errorMessage,
     displayTempError,
+    isConnected,
+    reconnectAttempt,
   };
 }
