@@ -1,22 +1,18 @@
 # Priority Queue Simulation
 
-TypeScript/Node.js a React aplikácia, ktorá simuluúca prioritnú frontu úloh.
+TypeScript/Node.js a React aplikácia, ktorá simuluje prioritnú frontu úloh.
 Systém obsahuje backend (REST API + WebSocket) pre správu úloh a frontend (React) pre vizualizáciu a interakciu v reálnom čase.
 
 ## Obsah
 
-- [Cieľ projektu](#cieľ-projektu)
 - [Vlastnosti](#vlastnosti)
 - [Architektúra projektu](#architektúra-projektu)
 - [Technológie](#technológie)
 - [Požiadavky](#požiadavky)
 - [Spustenie aplikácie](#spustenie-aplikácie)
-- [Hodnotenie a Bonusové Body](#hodnotenie-a-bonusové-body)
+- [Docker](#docker)
+- [Bonusy](#bonusy)
 - [Autori](#autori)
-
-## Cieľ projektu
-
-Cieľom projektu je vytvoriť kompletný full-stack systém, ktorý demonštruje real-time komunikáciu medzi backendom a frontendom, pričom úlohy sú spracovávané v prioritnej fronte a ich progres je okamžite vizualizovaný.
 
 ## Vlastnosti
 
@@ -66,20 +62,33 @@ Pre spustenie backendu aj frontendu postupujte nasledovne:
 3. **Spustenie Frontendu:**
    Podrobné inštrukcie v `frontend/README.md`.
 
-## Hodnotenie a Bonusové Body
+## Docker
 
-Tento projekt zahŕňa nasledujúce bonusové body:
+Aplikácia je dostupná aj ako Docker image v GitHub Container Registry. Pre spustenie pomocou Dockeru:
 
-- Použitie Socket.IO pre real-time aktualizácie fronty.
-- Implementácia graceful shutdown a robustného error handlingu.
-- Input validácia a sanitizácia (použitím Zod).
-- Použitie environmentálnych premenných pre konfiguráciu.
-- TypeScript strict mode v celom projekte.
-- Implementácia proper loggingu s nastaviteľnými úrovňami.
-- Implementácia API rate limitingu.
-- Použitie moderných React patternov (hooks, funkcionálne komponenty).
-- Dobrý dizajn komponentov a organizácia kódu (vlastné hooky, API klient trieda).
-- Standardizovaný formát API odpovedí.
+```
+# Stiahnutie Docker image
+docker pull ghcr.io/brenky7/priority-queue-app:latest
+
+# Spustenie kontajnera
+docker run -p 5050:5050 ghcr.io/brenky7/priority-queue-app:latest
+```
+
+## Bonusy
+
+Tento projekt zahŕňa nasledujúce bonusové body zo zadania:
+
+- Použitie Socket.IO pre real-time aktualizácie fronty
+- Implementácia graceful shutdown a robustného error handlingu
+- Input validácia a sanitizácia (použitím Zod)
+- Použitie environmentálnych premenných pre konfiguráciu
+- TypeScript strict mode v celom projekte
+- Implementácia proper loggingu s nastaviteľnými úrovňami
+- Implementácia API rate limitingu
+- Použitie moderných React patternov (hooks, funkcionálne komponenty)
+- Dobrý dizajn komponentov a organizácia kódu (vlastné hooky, API klient trieda)
+- Štandardizovaný formát API odpovedí
+- Dockerfile a docker image pre jednoduchý deployment
 
 ## Autor
 
