@@ -12,7 +12,8 @@ class SocketClient {
 
   constructor() {
     this.serverUrl =
-      import.meta.env.VITE_SOCKET_SERVER_URL || "http://localhost:5050";
+      import.meta.env.VITE_SOCKET_SERVER_URL ||
+      (import.meta.env.PROD ? "" : "http://localhost:5050");
   }
 
   // Pripojí sa k Socket.IO serveru a vráti socket inštanciu.

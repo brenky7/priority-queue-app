@@ -13,6 +13,7 @@ import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { info as logInfo, debug as logDebug } from "./utils/logger";
 import { taskService } from "./services/taskService";
+import path from "path";
 
 const app = express();
 const PORT = environment.port;
@@ -37,7 +38,11 @@ app.use(
 );
 app.use(express.json());
 
+app.use(express.static(path.join(__dirname, "../public")));
 app.use("/api", taskRoutes);
+app.use((_req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
+});
 app.use(globalErrorHandler);
 
 // Socket.IO setup

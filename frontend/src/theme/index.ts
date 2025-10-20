@@ -41,14 +41,6 @@ const config = defineConfig({
         },
       },
     },
-
-    recipes: {
-      button: {
-        defaultVariants: {
-          colorPalette: "brand",
-        },
-      },
-    },
   },
 });
 

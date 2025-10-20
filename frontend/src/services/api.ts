@@ -10,7 +10,8 @@ class ApiClient {
 
   constructor() {
     this.baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:5050/api"; // <-- UPRAVENÉ NA SPRÁVNY PORT
+      import.meta.env.VITE_API_BASE_URL ||
+      (import.meta.env.PROD ? "/api" : "http://localhost:5050/api");
   }
 
   // Spracovanie odpovedí z API
