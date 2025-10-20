@@ -12,9 +12,10 @@ import { type Task, TaskStatus } from "../../types/Task";
 
 interface TaskItemProps {
   task: Task;
+  width?: string;
 }
 
-export const TaskItem = ({ task }: TaskItemProps) => {
+export const TaskItem = ({ task, width = "100%" }: TaskItemProps) => {
   const getTaskColor = () => {
     if (task.status === TaskStatus.COMPLETED) {
       return "priority.completed";
@@ -35,9 +36,17 @@ export const TaskItem = ({ task }: TaskItemProps) => {
   return (
     <Box
       mb={4}
-      borderLeftWidth="4px"
+      width={width}
       borderLeftStyle="solid"
+      borderLeftWidth="4px"
+      borderRightWidth="1px"
+      borderTopWidth="1px"
+      borderBottomWidth="1px"
+      borderTopColor="cardBorder"
+      borderRightColor="cardBorder"
+      borderBottomColor="cardBorder"
       borderLeftColor={taskColor}
+      bg="cardBg"
       borderRadius="lg"
       boxShadow="md"
       transition="all 0.2s"

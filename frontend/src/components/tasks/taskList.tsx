@@ -12,19 +12,14 @@ import { TaskItem } from "./taskItem";
 import { useTaskStore } from "../../store/taskStore";
 
 export const TaskList = () => {
-  const {
-    activeTasks,
-    completedTasks,
-    currentlyProcessingTask,
-    clearCompletedTasks,
-    isLoading,
-  } = useTaskStore();
+  const { activeTasks, completedTasks, clearCompletedTasks, isLoading } =
+    useTaskStore();
 
   return (
-    <Box>
-      <SimpleGrid columns={{ base: 1, lg: 2 }} gap={8}>
+    <Box pt={2}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
         {/* Active Tasks Section */}
-        <Box>
+        <Box bg="blackAlpha.200" borderRadius="md" p={4}>
           <Heading size="md" mb={4}>
             Active Tasks
           </Heading>
@@ -42,7 +37,7 @@ export const TaskList = () => {
         </Box>
 
         {/* Completed Tasks Section */}
-        <Box>
+        <Box bg="blackAlpha.200" borderRadius="md" p={4}>
           <Flex align="center" justify="space-between" mb={4}>
             <Heading size="md">Completed Tasks</Heading>
             <Button
@@ -67,17 +62,6 @@ export const TaskList = () => {
           )}
         </Box>
       </SimpleGrid>
-
-      {/* Currently Processing Task */}
-      {currentlyProcessingTask && (
-        <Box mt={8}>
-          <Heading size="md" mb={4}>
-            Currently Processing
-          </Heading>
-          <Separator mb={4} />
-          <TaskItem task={currentlyProcessingTask} />
-        </Box>
-      )}
     </Box>
   );
 };

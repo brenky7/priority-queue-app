@@ -33,6 +33,12 @@ const config = defineConfig({
         appFg: {
           value: { base: "{colors.gray.800}", _dark: "{colors.gray.100}" },
         },
+        cardBorder: {
+          value: { base: "{colors.gray.200}", _dark: "{colors.gray.600}" },
+        },
+        cardBg: {
+          value: { base: "{colors.gray.50}", _dark: "{colors.gray.800}" },
+        },
       },
     },
 

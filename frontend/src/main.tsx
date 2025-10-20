@@ -1,15 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { ChakraProvider } from "@chakra-ui/react";
+import { Provider } from "./components/ui/provider";
 import App from "./App";
-import { system } from "./theme";
 import { Toaster } from "./components/ui/toaster";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ChakraProvider value={system}>
+    <Provider>
       <App />
       <Toaster />
-    </ChakraProvider>
+    </Provider>
   </React.StrictMode>
 );
